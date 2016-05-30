@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Whats the Weather</string>
+    <string name="appid">appid=c9c9a93309a1233662bb27bfd7651fe4</string>
+    <string name="search_path"><![CDATA[http://api.openweathermap.org/data/2.5/weather?q=]]></string>
+</resources>
