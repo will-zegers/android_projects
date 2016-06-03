@@ -1,0 +1,20 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.will.hackernews.MainActivity">
+    <item
+        android:id="@+id/top_stories"
+        android:orderInCategory="100"
+        android:title="Top"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/best_stories"
+        android:orderInCategory="100"
+        android:title="Best"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/new_stories"
+        android:orderInCategory="100"
+        android:title="New"
+        app:showAsAction="never" />
+</menu>
