@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Uber Clone</string>
+    <string name="title_activity_login">Login</string>
+    <string name="app_id">965c5c5773d0751352126a4a942fcd19</string>
+    <string name="master_key">68573e843b5136ef2563a67119e7bb73</string>
+    <string name="server_url"><![CDATA[https://fast-chamber-33158.herokuapp.com/parse/]]></string>
+    <string name="get_started">GET STARTED</string>
+    <string name="rider">Rider</string>
+    <string name="driver">Driver</string>
+    <string name="title_activity_rider">Rider</string>
+    <string name="request_uber">Request Uber</string>
+    <string name="title_activity_view_requests">ViewRequests</string>
+    <string name="title_activity_driver">Map</string>
+</resources>
