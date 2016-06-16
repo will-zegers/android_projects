@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/riderRelativeLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:map="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/map"
+    android:name="com.google.android.gms.maps.SupportMapFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.will.uberclone.RiderActivity" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:clickable="false">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/imageView"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignTop="@+id/requestUberButton"
+            android:layout_alignBottom="@+id/requestUberButton"
+            android:background="@color/colorPrimaryDark"
+            android:alpha="0.66" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/request_uber"
+            android:id="@+id/requestUberButton"
+            android:onClick="requestUber"
+            android:textSize="16sp"
+            style="@style/button"
+            android:layout_alignParentEnd="true"
+            android:alpha="1"
+            android:padding="5dp"
+            android:layout_margin="5dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/riderStatusText"
+            android:layout_alignParentStart="true"
+            android:textSize="24dp"
+            android:textColor="@android:color/white"
+            android:layout_centerVertical="true"
+            android:layout_margin="10dp"
+            android:layout_toStartOf="@id/requestUberButton" />
+    </RelativeLayout>
+
+</RelativeLayout>
