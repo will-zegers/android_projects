@@ -11,4 +11,6 @@
     <string name="request_uber">Request Uber</string>
     <string name="title_activity_view_requests">ViewRequests</string>
     <string name="title_activity_driver">Map</string>
+    <string name="accept_request">Accept Request</string>
+    <string name="back">Back</string>
 </resources>

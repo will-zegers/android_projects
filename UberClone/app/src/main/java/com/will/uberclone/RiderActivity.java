@@ -1,13 +1,11 @@
 package com.will.uberclone;
 
-import android.*;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -22,7 +20,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.parse.FindCallback;
 import com.parse.ParseACL;
@@ -39,13 +36,16 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private boolean hasRequested = false;
     private String provider, username;
-    private Location loc;
+    private Location location;
     private GoogleMap mMap;
     private LocationManager locationManager;
 
     final int ZOOM = 16;
-    final int MY_PERMISSIONS_REQUEST_FINE_LOCATION = 1;
 
+    private final int SET_LOCATION = 1;
+    private final int REMOVE_UPDATES = 2;
+
+    //region Activity Lifecycle methods
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,64 +69,23 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
     protected void onResume() {
         super.onResume();
 
-        try {
-            locationManager.requestLocationUpdates(provider, 500, 1, this);
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        }
+        getLocation();
     }
 
     @Override
     protected void onPause() {
-        try {
-            locationManager.removeUpdates(this);
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        }
+        removeUpdates();
         super.onPause();
     }
+    //endregion
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch(requestCode) {
-            case MY_PERMISSIONS_REQUEST_FINE_LOCATION: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    try {
-                        new GetLocationAsync().execute();
-                    } catch (SecurityException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                }
-            }
-        }
-    }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-
-        if (provider != null) {
-            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_FINE_LOCATION);
-                return;
-            } else {
-                new GetLocationAsync().execute();
-            }
-        }
-    }
-
+    //region LocationListener interface methods
     @Override
     public void onLocationChanged(Location location) {
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude() );
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         mMap.clear();
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, ZOOM ) );
-        mMap.addMarker(new MarkerOptions().position(latLng) );
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, ZOOM));
+        mMap.addMarker(new MarkerOptions().position(latLng));
     }
 
     @Override
@@ -143,34 +102,64 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
     public void onProviderDisabled(String provider) {
 
     }
+    //endregion
 
-    private class GetLocationAsync extends AsyncTask<Void, Void, Void> {
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
 
-        LatLng currentLatLng;
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-                loc = locationManager.getLastKnownLocation(provider);
-                currentLatLng = new LatLng(loc.getLatitude(), loc.getLongitude() );
-            } catch (SecurityException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            mMap.addMarker(new MarkerOptions().position(currentLatLng) );
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, ZOOM) );
-
-            super.onPostExecute(aVoid);
+        if (provider != null) {
+            LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
+            mMap.addMarker(new MarkerOptions().position(currentLatLng));
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, ZOOM));
         }
     }
 
+    //region Permission check methods
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case SET_LOCATION:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    getLocation();
+                }
+                break;
+            case REMOVE_UPDATES:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    removeUpdates();
+                }
+                break;
+        }
+    }
+
+    private void getLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    SET_LOCATION);
+            return;
+        }
+        locationManager.requestLocationUpdates(provider, 500, 1, this);
+        location = locationManager.getLastKnownLocation(provider);
+    }
+
+    private void removeUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    SET_LOCATION);
+            return;
+        }
+        locationManager.removeUpdates(this);
+    }
+    //endregion
+
     public void requestUber(View v) {
         if (hasRequested) {
-            ( (Button) findViewById(R.id.requestUberButton) ).setText("Request Uber");
+            ( (Button) findViewById(R.id.acceptRiderButton) ).setText("Request Uber");
             ( (TextView) findViewById(R.id.riderStatusText) ).setText("Uber Cancelled");
 
             ParseQuery<ParseObject> query = ParseQuery.getQuery("Request");
@@ -191,7 +180,7 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
                 }
             });
         } else {
-            ( (Button) findViewById(R.id.requestUberButton) ).setText("Cancel");
+            ( (Button) findViewById(R.id.acceptRiderButton) ).setText("Cancel");
             ( (TextView) findViewById(R.id.riderStatusText) ).setText("Finding Uber Driver...");
 
             ParseACL parseACL = new ParseACL();
@@ -203,7 +192,7 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
             parseObject.put("requestUsername", username );
             parseObject.put(
                     "requesterLocation",
-                    new ParseGeoPoint(loc.getLatitude(), loc.getLongitude() )
+                    new ParseGeoPoint(location.getLatitude(), location.getLongitude() )
             );
             parseObject.saveInBackground(new SaveCallback() {
                 @Override
@@ -214,7 +203,6 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
                     }
                 }
             });
-
         }
         hasRequested = !hasRequested;
     }

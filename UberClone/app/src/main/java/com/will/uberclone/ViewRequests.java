@@ -2,17 +2,17 @@ package com.will.uberclone;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +22,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.vision.barcode.Barcode;
 import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
@@ -31,6 +30,8 @@ import com.parse.ParseQuery;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.*;
+import java.util.jar.Manifest;
 
 public class ViewRequests extends AppCompatActivity implements LocationListener {
 
@@ -39,6 +40,10 @@ public class ViewRequests extends AppCompatActivity implements LocationListener 
     LocationManager locationManager;
     ParseGeoPoint currentGeoPoint;
 
+    private final int SET_LOCATION = 1;
+    private final int REMOVE_UPDATES = 2;
+
+    //region Activity lifecycle methods
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,22 +53,13 @@ public class ViewRequests extends AppCompatActivity implements LocationListener 
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         provider = locationManager.getBestProvider(new Criteria(), false);
-        if (provider != null) {
-            try {
-                location = locationManager.getLastKnownLocation(provider);
-            } catch (SecurityException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        try {
-            locationManager.requestLocationUpdates(provider, 500, 1, this);
-        } catch (SecurityException e) {
-            e.printStackTrace();
+        if (provider != null) {
+            getLocation();
         }
 
         currentGeoPoint = new ParseGeoPoint(location.getLatitude(), location.getLongitude() );
@@ -86,23 +82,15 @@ public class ViewRequests extends AppCompatActivity implements LocationListener 
 
     @Override
     protected void onPause() {
-        try {
-            locationManager.removeUpdates(this);
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        }
+        removeUpdates();
         super.onPause();
     }
+    //endregion
 
+    //region LocationListener interface methods
     @Override
     public void onLocationChanged(Location location) {
-        if (provider != null) {
-            try {
-                location = locationManager.getLastKnownLocation(provider);
-            } catch (SecurityException e) {
-                e.printStackTrace();
-            }
-        }
+        getLocation();
     }
 
     @Override
@@ -119,16 +107,67 @@ public class ViewRequests extends AppCompatActivity implements LocationListener 
     public void onProviderDisabled(String provider) {
 
     }
+    //endregion
+
+    //region Permission check methods
+
+    private void getLocation() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                    SET_LOCATION);
+            return;
+        }
+        locationManager.requestLocationUpdates(provider, 500, 1, this);
+        location = locationManager.getLastKnownLocation(provider);
+
+    }
+
+    private void removeUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                    SET_LOCATION);
+            return;
+        }
+        locationManager.removeUpdates(this);
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case SET_LOCATION:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    getLocation();
+                }
+                break;
+            case REMOVE_UPDATES:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    removeUpdates();
+                }
+                break;
+        }
+    }
+
+    //endregion
 
     private class GetDistancesAsync extends AsyncTask<List<ParseObject>, Void, ArrayList<ParseGeoPoint> > {
 
+        private ArrayList<String> objectIds;
+
         @Override
         protected ArrayList<ParseGeoPoint> doInBackground(List<ParseObject>... objects) {
+
             final ArrayList<ParseGeoPoint> geoPointList = new ArrayList<>();
-            ParseGeoPoint gp;
+            objectIds = new ArrayList<>();
+
             for (ParseObject o : objects[0]) {
-                gp = o.getParseGeoPoint("requesterLocation");
-                geoPointList.add(gp);
+                geoPointList.add(o.getParseGeoPoint("requesterLocation") );
+                objectIds.add(o.getObjectId() );
             }
 
             return geoPointList;
@@ -153,6 +192,7 @@ public class ViewRequests extends AppCompatActivity implements LocationListener 
                                     geoPointList.get(position).getLatitude(),
                                     geoPointList.get(position).getLongitude() )
                     );
+                    i.putExtra("objectId", objectIds.get(position) );
                     startActivity(i);
                 }
             });
