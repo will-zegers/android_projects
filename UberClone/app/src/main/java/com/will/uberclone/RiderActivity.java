@@ -40,12 +40,13 @@ import java.util.List;
 
 public class RiderActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
 
+    private Rider rider;
+    private Driver driver;
+
     private boolean hasRequested = false;
-    private String provider, username;
-    private Location location;
+    private String provider;
     private GoogleMap mMap;
     private LocationManager locationManager;
-    private Marker driverMarker;
 
     private final int ZOOM = 16;
     private final int SET_LOCATION = 1;
@@ -67,10 +68,12 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         provider = locationManager.getBestProvider(new Criteria(), false);
 
+        rider  = new Rider("Current position");
+        driver = new Driver("Driver");
         try {
-            username = ParseUser.getCurrentUser().fetch().getUsername();
+            rider.username = ParseUser.getCurrentUser().fetch().getUsername();
         } catch (ParseException e) {
-            e.printStackTrace();
+            rider.username = "Unavailable";
         }
     }
 
@@ -93,8 +96,8 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
     public void onLocationChanged(Location location) {
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         mMap.clear();
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, ZOOM));
-        mMap.addMarker(new MarkerOptions().position(latLng));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(rider.getLatLng(), ZOOM));
+        mMap.addMarker(rider.markerOptions);
     }
 
     @Override
@@ -120,7 +123,7 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
         switch (requestCode) {
             case SET_LOCATION:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    getLocation();
+                    getUserLocation(rider);
                 }
                 break;
             case REMOVE_UPDATES:
@@ -128,10 +131,15 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
                     removeUpdates();
                 }
                 break;
+            case REQUEST_LOCATION_UPDATES:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    requestLocationUpdates();
+                }
+                break;
         }
     }
 
-    private void getLocation() {
+    private void getUserLocation(UberUser user) {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
             ActivityCompat.requestPermissions(this,
@@ -139,7 +147,7 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
                     SET_LOCATION);
             return;
         }
-        location = locationManager.getLastKnownLocation(provider);
+        user.setLocation(locationManager, provider);
     }
 
     private void requestLocationUpdates() {
@@ -169,26 +177,22 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
 
-        getLocation();
-        if (location != null) {
-            LatLng currentLatLng = new LatLng(location.getLatitude(), location.getLongitude());
-            mMap.addMarker(new MarkerOptions().position(currentLatLng));
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currentLatLng, ZOOM));
+        getUserLocation(rider);
+        if (rider.getLocation() != null) {
+            mMap.addMarker(rider.markerOptions);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(rider.getLatLng(), ZOOM));
         }
     }
 
     //region onClick methods and tasks
     public void requestUber(View v) {
         if (hasRequested) {
-            Log.i("requestUber", "In");
             mHandler.removeCallbacks(mDriverUpdater);
             new CancelUberAsync().execute();
-            Log.i("requestUber", "Out");
         } else {
             new RequestUberAsync().execute();
         }
         hasRequested = !hasRequested;
-
     }
 
     private abstract class UberAsyncTask extends AsyncTask<Void, Void, Void> {
@@ -197,7 +201,7 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
         protected Void doInBackground(Void... params) {
 
             ParseQuery<ParseObject> query = ParseQuery.getQuery("Request");
-            query.whereEqualTo("requestUsername", username);
+            query.whereEqualTo("requestUsername", rider.username);
             query.findInBackground(new FindCallback<ParseObject>() {
                 @Override
                 public void done(List<ParseObject> objects, ParseException e) {
@@ -221,8 +225,6 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
 
         @Override
         protected Void doInBackground(Void... params) {
-            Log.i("UberAsync", "Cancelling");
-
             return super.doInBackground(params);
         }
 
@@ -230,8 +232,6 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
         protected void onPostExecute(Void aVoid) {
             ( (Button) findViewById(R.id.acceptRiderButton) ).setText("Request Uber");
             ( (TextView) findViewById(R.id.riderStatusText) ).setText("Uber Cancelled");
-            Log.i("UberAsync", "Cancelled");
-
 
             super.onPostExecute(aVoid);
         }
@@ -250,10 +250,10 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
 
             ParseObject parseObject = new ParseObject("Request");
             parseObject.setACL(parseACL);
-            parseObject.put("requestUsername", username );
+            parseObject.put("requestUsername", rider.username );
             parseObject.put(
                     "requesterLocation",
-                    new ParseGeoPoint(location.getLatitude(), location.getLongitude() )
+                    new ParseGeoPoint(rider.getLatitude(), rider.getLongitude() )
             );
             parseObject.saveInBackground(new SaveCallback() {
                 @Override
@@ -281,9 +281,11 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
 
         @Override
         protected Void doInBackground(Void... params) {
-            while ( hasRequested && (driverLocation = getDriverLocation() ) == null) {
+            driver.setLocation(getDriverLocation());
+            while (hasRequested && (driver.getLocation()) == null) {
                 try {
                     Thread.sleep(UPDATE_INTERVAL);
+                    driver.setLocation(getDriverLocation());
                 } catch (InterruptedException e1) {
                     e1.printStackTrace();
                 }
@@ -297,8 +299,8 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
                 ((TextView) findViewById(R.id.riderStatusText)).setText("A driver is on the way!");
                 mDriverUpdater.run();
                 LatLngBounds latLngBounds = LatLngBounds.builder()
-                        .include(new LatLng(driverLocation.getLatitude(), driverLocation.getLongitude()))
-                        .include(new LatLng(location.getLatitude(), location.getLongitude()))
+                        .include(new LatLng(driver.getLatitude(), driver.getLongitude()))
+                        .include(new LatLng(rider.getLatitude(), rider.getLongitude()))
                         .build();
                 mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, PADDING));
             }
@@ -315,17 +317,15 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
         @Override
         public void run() {
 
-            driverLocation = getDriverLocation();
-            LatLng driverLatLng = new LatLng(driverLocation.getLatitude(), driverLocation.getLongitude() );
+            driver.setLocation(getDriverLocation());
 
-            if (driverMarker != null) { driverMarker.remove(); }
+            if (driver.marker != null) { driver.marker.remove(); }
             if (mMap != null) {
-                driverMarker = mMap.addMarker(new MarkerOptions()
-                        .position(driverLatLng)
-                        .title("Your driver")
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-                );
-                driverMarker.showInfoWindow();
+                driver.marker = mMap.addMarker(driver.markerOptions);
+                driver.marker.showInfoWindow();
+
+                double distanceInMiles = driverLocation.distanceInMilesTo(new ParseGeoPoint(rider.getLatitude(), rider.getLongitude()));
+                ((TextView) findViewById(R.id.riderStatusText)).setText("Driver is " + String.format("%.1f", distanceInMiles) + " miles away");
             }
             mHandler.postDelayed(mDriverUpdater, UPDATE_INTERVAL);
         }
@@ -334,7 +334,7 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
     private ParseGeoPoint getDriverLocation() {
 
         ParseQuery<ParseObject> query = ParseQuery.getQuery("Request");
-        query.whereEqualTo("requestUsername", username);
+        query.whereEqualTo("requestUsername", rider.username);
         query.getFirstInBackground(new GetCallback<ParseObject>() {
 
             @Override
