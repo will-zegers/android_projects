@@ -14,8 +14,6 @@ import com.parse.ParseException;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
 
-import java.util.List;
-
 public class LoginActivity extends AppCompatActivity {
 
     @Override
@@ -64,7 +62,7 @@ public class LoginActivity extends AppCompatActivity {
         if ( (Boolean) ParseUser.getCurrentUser().get("isDriver") ) {
             userActivity = ViewRequests.class;
         } else {
-            userActivity = RiderActivity.class;
+            userActivity = RiderMapActivity.class;
         }
 
         Intent i = new Intent(getApplicationContext(), userActivity);

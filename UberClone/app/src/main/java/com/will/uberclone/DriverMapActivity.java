@@ -21,11 +21,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.parse.GetCallback;
 import com.parse.ParseException;
 import com.parse.ParseObject;
@@ -33,7 +30,7 @@ import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
 
-public class DriverActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
+public class DriverMapActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
 
     private Rider rider;
     private Driver driver;
@@ -78,12 +75,12 @@ public class DriverActivity extends FragmentActivity implements OnMapReadyCallba
         requestLocationUpdates();
     }
 
-    @Override
-    protected void onPause() {
-        removeUpdates();
-        mHandler.removeCallbacks(mLocationUpdater);
-        super.onPause();
-    }
+//    @Override
+//    protected void onPause() {
+//        removeUpdates();
+//        mHandler.removeCallbacks(mLocationUpdater);
+//        super.onPause();
+//    }
     //endregion
 
     @Override
@@ -205,9 +202,7 @@ public class DriverActivity extends FragmentActivity implements OnMapReadyCallba
                 public void done(ParseObject object, ParseException e) {
                     if (e == null) {
                         fareObject = object;
-                        fareObject.put(
-                                "driverUsername",
-                                driver.username );
+                        fareObject.put("driverUsername", driver.username );
                         fareObject.saveInBackground(new SaveCallback() {
                             @Override
                             public void done(ParseException e) {
@@ -254,7 +249,7 @@ public class DriverActivity extends FragmentActivity implements OnMapReadyCallba
             @Override
             public void done(ParseException e) {
                 if (e != null) {
-                    Log.i("DriverActivity", "updateLocation : saveInBackground - failure");
+                    Log.i("DriverMapActivity", "updateLocation : saveInBackground - failure");
                     e.printStackTrace();
                 }
             }
