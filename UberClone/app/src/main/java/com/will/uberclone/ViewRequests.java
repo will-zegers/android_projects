@@ -30,6 +30,8 @@ import com.parse.ParseQuery;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.*;
+import java.util.jar.Manifest;
 
 public class ViewRequests extends AppCompatActivity implements LocationListener {
 
@@ -184,7 +186,7 @@ public class ViewRequests extends AppCompatActivity implements LocationListener 
             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    Intent i = new Intent(getApplicationContext(), DriverMapActivity.class);
+                    Intent i = new Intent(getApplicationContext(), DriverActivity.class);
                     i.putExtra("requesterLocation",
                             new LatLng(
                                     geoPointList.get(position).getLatitude(),

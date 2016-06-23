@@ -38,7 +38,7 @@ import com.parse.SaveCallback;
 
 import java.util.List;
 
-public class RiderMapActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
+public class RiderActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
 
     private Rider rider;
     private Driver driver;

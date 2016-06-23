@@ -42,7 +42,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".RiderMapActivity"
+            android:name=".RiderActivity"
             android:label="@string/title_activity_rider">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -58,7 +58,7 @@
                 android:value="com.will.uberclone.LoginActivity" />
         </activity>
         <activity
-            android:name=".DriverMapActivity"
+            android:name=".DriverActivity"
             android:label="@string/title_activity_driver">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

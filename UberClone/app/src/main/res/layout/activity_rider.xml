@@ -12,7 +12,7 @@
     android:name="com.google.android.gms.maps.SupportMapFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".RiderMapActivity" />
+    tools:context="com.will.uberclone.RiderActivity" />
 
     <RelativeLayout
         android:layout_width="match_parent"

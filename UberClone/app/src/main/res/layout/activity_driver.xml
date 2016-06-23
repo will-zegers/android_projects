@@ -12,7 +12,7 @@
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".DriverMapActivity" />
+        tools:context="com.will.uberclone.DriverActivity" />
 
     <Button
         android:layout_width="wrap_content"
