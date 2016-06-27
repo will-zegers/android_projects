@@ -29,6 +29,15 @@
             android:name=".UserList"
             android:label="@string/title_activity_user_list"
             android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".ViewFeed"
+            android:label="@string/title_activity_view_feed"
+            android:parentActivityName=".UserList"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.will.twitterclone.UserList" />
+        </activity>
     </application>
 
 </manifest>

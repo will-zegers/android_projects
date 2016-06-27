@@ -8,4 +8,5 @@
     <string name="title_activity_main">MainActivity</string>
     <string name="tweet_success">Tweet has been sent!</string>
     <string name="tweet_failure">Tweet could not be sent at this time. Please try again.</string>
+    <string name="title_activity_view_feed">ViewFeed</string>
 </resources>

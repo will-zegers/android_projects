@@ -1,6 +1,7 @@
 package com.will.twitterclone;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -132,6 +133,8 @@ public class UserList extends AppCompatActivity {
                 });
                 builder.show();
                 return true;
+            case R.id.feed:
+                startActivity(new Intent(getApplicationContext(), ViewFeed.class));
             default:
                 break;
         }
