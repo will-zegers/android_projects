@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Twitter</string>
+    <string name="parse_app_id">mJLvXmWnS2ZMHnxKvNNn</string>
+    <string name="parse_server_url"><![CDATA[http://salty-shelf-39574.herokuapp.com/parse/]]></string>
+    <string name="title_activity_login">Login</string>
+    <string name="loginSignupFailure">Could not login or signup at this time - please try again later</string>
+    <string name="title_activity_user_list">UserList</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="tweet_success">Tweet has been sent!</string>
+    <string name="tweet_failure">Tweet could not be sent at this time. Please try again.</string>
+</resources>
